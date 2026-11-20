@@ -1,0 +1,1822 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#ffe6f2" />
+  <title>💌 Вопрос для Стины | 8-Bit Edition</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-top: #ffe6f2;
+      --bg-bottom: #f3e5ff;
+      --panel-bg: #fff8fc;
+      --panel-cream: #fffdf5;
+      --pink-light: #ffb3d9;
+      --pink-main: #ff66b2;
+      --pink-dark: #d93b8a;
+      --lavender: #d8c2ff;
+      --lavender-dark: #8c6bb1;
+      --ink: #4a2545;
+      --ink-soft: #75466d;
+      --white: #ffffff;
+      --pixel-font: 'Press Start 2P', 'Courier New', Courier, monospace;
+      --sat: env(safe-area-inset-top, 0px);
+      --sab: env(safe-area-inset-bottom, 0px);
+      --sal: env(safe-area-inset-left, 0px);
+      --sar: env(safe-area-inset-right, 0px);
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100vh;
+      height: 100dvh;
+      overflow: hidden;
+      overscroll-behavior: none;
+      touch-action: none;
+      font-family: var(--pixel-font);
+      color: var(--ink);
+      background: linear-gradient(160deg, var(--bg-top) 0%, #fce8f6 48%, var(--bg-bottom) 100%);
+      image-rendering: pixelated;
+    }
+
+    /* Hidden probe for Android safe-area-inset calculation */
+    #safe-area-probe {
+      position: fixed;
+      top: 0;
+      left: 0;
+      padding-top: env(safe-area-inset-top, 0px);
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+      padding-left: env(safe-area-inset-left, 0px);
+      padding-right: env(safe-area-inset-right, 0px);
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    /* Subtle pixel grid pattern overlay */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        radial-gradient(rgba(255, 102, 178, 0.14) 1px, transparent 1px);
+      background-size: 16px 16px;
+      z-index: 0;
+    }
+
+    canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    #bg-canvas {
+      z-index: 1;
+    }
+
+    #fx-canvas {
+      z-index: 90;
+    }
+
+    /* Pixel border utility */
+    .pixel-box {
+      background: var(--panel-cream);
+      border: 4px solid var(--ink);
+      box-shadow:
+        0 4px 0 0 rgba(74, 37, 69, 0.25),
+        inset 0 0 0 4px var(--pink-light),
+        inset 0 0 0 8px var(--white);
+      position: relative;
+    }
+
+    /* RPG Top Status Bar */
+    .rpg-hud {
+      position: fixed;
+      top: calc(8px + var(--sat));
+      left: calc(10px + var(--sal));
+      right: calc(10px + var(--sar));
+      z-index: 40;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      flex-wrap: nowrap;
+      pointer-events: none;
+    }
+
+    .hud-pill {
+      pointer-events: auto;
+      background: var(--panel-cream);
+      border: 3px solid var(--ink);
+      box-shadow: 3px 3px 0 0 var(--ink);
+      padding: 6px 9px;
+      font-size: 9px;
+      line-height: 1.35;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
+    }
+
+    .hud-player {
+      background: #fff0f7;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .hud-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .hud-counter {
+      background: #f5ecff;
+    }
+
+    .hud-counter strong {
+      color: var(--pink-dark);
+      font-size: 10px;
+    }
+
+    .sound-btn {
+      pointer-events: auto;
+      font-family: var(--pixel-font);
+      font-size: 13px;
+      background: var(--pink-light);
+      color: var(--ink);
+      border: 3px solid var(--ink);
+      box-shadow: 3px 3px 0 0 var(--ink);
+      padding: 4px 8px;
+      cursor: pointer;
+      transition: transform 0.08s;
+      line-height: 1.2;
+      flex-shrink: 0;
+    }
+
+    .sound-btn:active {
+      transform: translate(2px, 2px);
+      box-shadow: 1px 1px 0 0 var(--ink);
+    }
+
+    /* Main centered stage */
+    .stage {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: calc(54px + var(--sat)) calc(14px + var(--sar)) calc(20px + var(--sab)) calc(14px + var(--sal));
+    }
+
+    /* Misa + Speech Bubble area */
+    .misa-zone {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: -8px;
+      z-index: 15;
+      position: relative;
+      width: 100%;
+      max-width: 560px;
+    }
+
+    .speech-bubble {
+      background: var(--white);
+      border: 3px solid var(--ink);
+      box-shadow: 4px 4px 0 0 rgba(74, 37, 69, 0.22);
+      padding: 9px 13px;
+      font-size: 9.5px;
+      line-height: 1.6;
+      text-align: center;
+      max-width: 460px;
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 10px;
+      position: relative;
+      color: var(--ink);
+      transition: transform 0.15s ease;
+    }
+
+    .speech-bubble.pop {
+      animation: bubblePop 0.28s steps(3, end);
+    }
+
+    .speech-bubble::after {
+      content: "";
+      position: absolute;
+      bottom: -11px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 12px;
+      height: 8px;
+      background: var(--white);
+      border-left: 3px solid var(--ink);
+      border-right: 3px solid var(--ink);
+      border-bottom: 3px solid var(--ink);
+    }
+
+    @keyframes bubblePop {
+      0% { transform: scale(0.92); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+
+    .misa-sprite-wrap {
+      cursor: pointer;
+      position: relative;
+      transition: transform 0.15s steps(2);
+      filter: drop-shadow(0 4px 0 rgba(74, 37, 69, 0.22));
+    }
+
+    .misa-sprite-wrap:hover {
+      transform: translateY(-2px);
+    }
+
+    .misa-sprite-wrap:active {
+      transform: scale(0.95);
+    }
+
+    .misa-svg {
+      width: 120px;
+      height: 106px;
+      display: block;
+      image-rendering: pixelated;
+    }
+
+    /* Tail wag animation */
+    #misa-tail {
+      transform-origin: 26px 25px;
+      animation: tailWag 1.2s steps(2, end) infinite;
+    }
+
+    @keyframes tailWag {
+      0%, 100% { transform: rotate(0deg); }
+      50% { transform: rotate(7deg); }
+    }
+
+    /* Ears twitch */
+    .misa-ear-twitch {
+      animation: earTwitch 4s steps(2, end) infinite;
+      transform-origin: center;
+    }
+
+    @keyframes earTwitch {
+      0%, 92%, 100% { transform: translateY(0); }
+      95% { transform: translateY(-1px); }
+    }
+
+    /* Dialog Card */
+    .dialog-card {
+      width: 100%;
+      max-width: 580px;
+      padding: 24px 22px 22px;
+      text-align: center;
+      z-index: 12;
+    }
+
+    .dialog-title {
+      font-size: 11.5px;
+      line-height: 1.6;
+      color: var(--pink-dark);
+      margin: 0 0 12px;
+      text-shadow: 2px 2px 0 #ffd6ea;
+    }
+
+    .dialog-text {
+      font-size: 11px;
+      line-height: 1.85;
+      color: var(--ink);
+      margin: 0 0 22px;
+    }
+
+    /* Buttons area */
+    .buttons-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      min-height: 74px;
+      position: relative;
+    }
+
+    .pixel-btn {
+      font-family: var(--pixel-font);
+      font-size: 10.5px;
+      line-height: 1.45;
+      padding: 13px 16px;
+      border: 4px solid var(--ink);
+      cursor: pointer;
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      text-align: center;
+      transition: transform 0.14s steps(3), box-shadow 0.14s, background 0.15s;
+    }
+
+    .btn-love {
+      background: linear-gradient(180deg, #ff85c2 0%, var(--pink-main) 100%);
+      color: var(--white);
+      text-shadow: 2px 2px 0 var(--pink-dark);
+      box-shadow:
+        0 5px 0 0 var(--pink-dark),
+        0 8px 0 0 var(--ink),
+        inset 0 3px 0 0 #ffc2e0;
+      z-index: 25;
+      transform: scale(var(--love-scale, 1));
+      animation: loveIdleGlow 2s ease-in-out infinite;
+    }
+
+    @keyframes loveIdleGlow {
+      0%, 100% { filter: brightness(1); }
+      50% { filter: brightness(1.06); }
+    }
+
+    .btn-love:hover {
+      filter: brightness(1.09);
+      transform: translateY(-2px) scale(var(--love-scale, 1));
+    }
+
+    .btn-love:active {
+      transform: translateY(3px) scale(var(--love-scale, 1));
+      box-shadow:
+        0 2px 0 0 var(--pink-dark),
+        0 4px 0 0 var(--ink);
+    }
+
+    /* Runaway button with pixel legs */
+    .btn-runaway-wrap {
+      display: inline-block;
+      position: relative;
+      z-index: 60;
+      touch-action: none;
+    }
+
+    .btn-runaway-wrap.escaped {
+      position: fixed;
+      margin: 0;
+    }
+
+    .btn-runaway-wrap.smooth-move {
+      transition: left 0.14s cubic-bezier(0.22, 1, 0.36, 1), top 0.14s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .btn-runaway-wrap.poof-in {
+      animation: poofAppear 0.2s steps(3, end);
+    }
+
+    @keyframes poofAppear {
+      0% { transform: scale(0.4); opacity: 0.4; }
+      70% { transform: scale(1.12); opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .btn-runaway {
+      background: #efe6ff;
+      color: var(--ink);
+      font-size: 9.5px;
+      padding: 11px 13px;
+      box-shadow:
+        0 4px 0 0 var(--lavender-dark),
+        0 7px 0 0 var(--ink),
+        inset 0 3px 0 0 var(--white);
+      position: relative;
+      z-index: 2;
+      max-width: calc(100vw - 36px);
+      white-space: nowrap;
+      touch-action: none;
+    }
+
+    /* Pixel face badge on the runaway button */
+    .btn-face {
+      font-size: 12px;
+      line-height: 1;
+      display: inline-block;
+    }
+
+    /* Pixel legs underneath the runaway button */
+    .pixel-legs {
+      position: relative;
+      height: 14px;
+      width: 54px;
+      margin: -2px auto 0;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .leg {
+      position: absolute;
+      top: 0;
+      width: 8px;
+      height: 11px;
+      background: var(--ink);
+      box-shadow: 4px 8px 0 0 var(--ink);
+    }
+
+    .leg-left {
+      left: 10px;
+    }
+
+    .leg-right {
+      right: 14px;
+      box-shadow: 4px 8px 0 0 var(--ink);
+    }
+
+    .btn-runaway-wrap.running .leg-left {
+      animation: legRunL 0.14s steps(2, end) infinite;
+    }
+
+    .btn-runaway-wrap.running .leg-right {
+      animation: legRunR 0.14s steps(2, end) infinite;
+    }
+
+    .btn-runaway-wrap.running .btn-runaway {
+      animation: bodyBounce 0.14s steps(2, end) infinite;
+    }
+
+    @keyframes legRunL {
+      0% { transform: translateY(0) rotate(14deg); }
+      50% { transform: translateY(-4px) rotate(-18deg); }
+      100% { transform: translateY(0) rotate(14deg); }
+    }
+
+    @keyframes legRunR {
+      0% { transform: translateY(-4px) rotate(-18deg); }
+      50% { transform: translateY(0) rotate(14deg); }
+      100% { transform: translateY(-4px) rotate(-18deg); }
+    }
+
+    @keyframes bodyBounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-2px); }
+    }
+
+    /* Floating *ПУФ!* tag */
+    .poof-tag {
+      position: fixed;
+      z-index: 95;
+      font-family: var(--pixel-font);
+      font-size: 10px;
+      color: var(--pink-dark);
+      background: var(--white);
+      border: 2px solid var(--ink);
+      padding: 3px 6px;
+      pointer-events: none;
+      animation: poofFloat 0.65s steps(5, end) forwards;
+    }
+
+    @keyframes poofFloat {
+      0% { transform: translate(-50%, -50%) scale(0.8); opacity: 1; }
+      100% { transform: translate(-50%, -140%) scale(1.1); opacity: 0; }
+    }
+
+    /* Victory Screen */
+    .victory-card {
+      display: none;
+      width: 100%;
+      max-width: 580px;
+      padding: 22px 20px 18px;
+      text-align: center;
+      z-index: 30;
+      animation: victoryIn 0.4s steps(4, end);
+    }
+
+    .victory-card.active {
+      display: block;
+    }
+
+    @keyframes victoryIn {
+      0% { transform: scale(0.7); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .victory-title {
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--pink-dark);
+      margin: 4px 0 12px;
+      text-shadow: 2px 2px 0 #ffd6ea;
+    }
+
+    /* Real Misa Photo Frame on Victory Screen */
+    .real-misa-frame {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      background: var(--white);
+      border: 4px solid var(--ink);
+      box-shadow: 4px 4px 0 0 rgba(74, 37, 69, 0.25);
+      padding: 6px 6px 8px;
+      margin: 0 auto 14px;
+      cursor: pointer;
+      transition: transform 0.15s steps(2);
+    }
+
+    .real-misa-frame.hop {
+      animation: misaPhotoHop 0.32s steps(3, end);
+    }
+
+    @keyframes misaPhotoHop {
+      0% { transform: translateY(0) scale(1); }
+      45% { transform: translateY(-8px) scale(1.06); }
+      100% { transform: translateY(0) scale(1); }
+    }
+
+    .real-misa-img {
+      width: 104px;
+      height: 104px;
+      object-fit: cover;
+      border: 3px solid var(--pink-light);
+      display: block;
+      image-rendering: auto;
+    }
+
+    .real-misa-caption {
+      font-size: 7.5px;
+      line-height: 1.4;
+      color: var(--ink-soft);
+      margin-top: 6px;
+    }
+
+    .victory-quote {
+      font-size: 10px;
+      line-height: 1.85;
+      background: #fff0f7;
+      border: 3px dashed var(--pink-main);
+      padding: 12px 10px;
+      margin: 0 0 12px;
+      color: var(--ink);
+    }
+
+    .victory-stats {
+      font-size: 8.5px;
+      line-height: 1.7;
+      color: var(--ink-soft);
+      margin: 0 0 16px;
+    }
+
+    .victory-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .btn-pet {
+      background: #ffe08a;
+      color: var(--ink);
+      font-size: 9.5px;
+      padding: 11px 13px;
+      box-shadow:
+        0 4px 0 0 #c99a2e,
+        0 7px 0 0 var(--ink),
+        inset 0 3px 0 0 #fff4cc;
+    }
+
+    .btn-pet:active {
+      transform: translateY(3px);
+      box-shadow: 0 2px 0 0 #c99a2e, 0 4px 0 0 var(--ink);
+    }
+
+    .btn-replay {
+      background: #e6f3ff;
+      color: var(--ink);
+      font-size: 9.5px;
+      padding: 11px 13px;
+      box-shadow:
+        0 4px 0 0 #7097bd,
+        0 7px 0 0 var(--ink),
+        inset 0 3px 0 0 var(--white);
+    }
+
+    .btn-replay:active {
+      transform: translateY(3px);
+      box-shadow: 0 2px 0 0 #7097bd, 0 4px 0 0 var(--ink);
+    }
+
+    .dreamies-counter {
+      font-size: 8.5px;
+      color: var(--pink-dark);
+      margin-top: 10px;
+      min-height: 16px;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* Compact Android & Small Mobile adjustments (360px-420px single-row HUD) */
+    @media (max-width: 540px) {
+      .rpg-hud {
+        gap: 4px;
+      }
+      .hud-pill {
+        font-size: 6.5px;
+        padding: 4px 6px;
+        border-width: 2px;
+        box-shadow: 2px 2px 0 0 var(--ink);
+      }
+      .hud-player .hud-lvl-full {
+        display: none;
+      }
+      .hud-counter strong {
+        font-size: 8px;
+      }
+      .sound-btn {
+        font-size: 11px;
+        padding: 3px 6px;
+        border-width: 2px;
+        box-shadow: 2px 2px 0 0 var(--ink);
+      }
+      .stage {
+        padding: calc(44px + var(--sat)) calc(12px + var(--sar)) calc(14px + var(--sab)) calc(12px + var(--sal));
+      }
+      .speech-bubble {
+        font-size: 8px;
+        padding: 7px 9px;
+        min-height: 38px;
+        margin-bottom: 8px;
+      }
+      .misa-svg {
+        width: 96px;
+        height: 85px;
+      }
+      .dialog-card, .victory-card {
+        padding: 18px 13px 16px;
+      }
+      .dialog-title {
+        font-size: 9.5px;
+        margin-bottom: 10px;
+      }
+      .dialog-text {
+        font-size: 8.8px;
+        line-height: 1.75;
+        margin-bottom: 16px;
+      }
+      .pixel-btn {
+        font-size: 9px;
+        padding: 11px 12px;
+      }
+      .btn-runaway {
+        font-size: 8px;
+        padding: 9px 10px;
+        max-width: calc(100vw - 36px);
+        white-space: normal;
+      }
+      .victory-title {
+        font-size: 10.5px;
+        margin-bottom: 10px;
+      }
+      .real-misa-img {
+        width: 88px;
+        height: 88px;
+      }
+      .real-misa-caption {
+        font-size: 6.8px;
+      }
+      .victory-quote {
+        font-size: 8.5px;
+        padding: 10px 8px;
+      }
+      .victory-stats {
+        font-size: 7.5px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="safe-area-probe" aria-hidden="true"></div>
+  <canvas id="bg-canvas"></canvas>
+  <canvas id="fx-canvas"></canvas>
+
+  <!-- RPG HUD -->
+  <header class="rpg-hud">
+    <div class="hud-pill hud-player">
+      <span>ДЛЯ СТИНЫ ❤️</span>
+    </div>
+    <div class="hud-right">
+      <div class="hud-pill hud-counter">
+        <span>Попыток нажать «Нет»: <strong id="attempt-count">0</strong></span>
+      </div>
+      <button id="sound-toggle" class="sound-btn" type="button" title="Включить/выключить 8-бит звук">🔊</button>
+    </div>
+  </header>
+
+  <main class="stage">
+    <!-- Misa Cat & Speech Bubble -->
+    <section class="misa-zone" id="misa-zone">
+      <div class="speech-bubble" id="misa-bubble">
+        Мяу! Ну что, идём гулять? 🐾
+      </div>
+      <div class="misa-sprite-wrap" id="misa-sprite" title="Нажми, чтобы помяукать с Мисой">
+        <!-- Crisp 8-Bit Tabby Kitten Misa (36x32 grid matching her real photo!) -->
+        <svg class="misa-svg" viewBox="0 0 36 32" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+          <!-- Animated Striped Tabby Tail -->
+          <g id="misa-tail">
+            <rect x="25" y="25" width="4" height="3" fill="#2e1a0e"/>
+            <rect x="28" y="23" width="4" height="3" fill="#2e1a0e"/>
+            <rect x="30" y="20" width="3" height="4" fill="#2e1a0e"/>
+            <rect x="26" y="26" width="3" height="1" fill="#b88655"/>
+            <rect x="29" y="24" width="2" height="1" fill="#cfa06e"/>
+            <rect x="31" y="21" width="1" height="2" fill="#b88655"/>
+            <rect x="31" y="20" width="1" height="1" fill="#4d2e1b"/>
+          </g>
+
+          <!-- Big Upright Kitten Ears -->
+          <g class="misa-ear-twitch">
+            <!-- Left Ear outline -->
+            <rect x="8" y="1" width="2" height="1" fill="#3b2314"/>
+            <rect x="7" y="2" width="1" height="5" fill="#3b2314"/>
+            <rect x="10" y="2" width="2" height="1" fill="#3b2314"/>
+            <rect x="12" y="3" width="1" height="2" fill="#3b2314"/>
+            <rect x="13" y="5" width="1" height="2" fill="#3b2314"/>
+            <!-- Left Ear fur & peach inner -->
+            <rect x="8" y="2" width="2" height="5" fill="#b88655"/>
+            <rect x="10" y="3" width="2" height="4" fill="#6e472b"/>
+            <rect x="12" y="5" width="1" height="2" fill="#b88655"/>
+            <rect x="9" y="3" width="2" height="4" fill="#e8b4a6"/>
+            <rect x="8" y="4" width="1" height="3" fill="#e8b4a6"/>
+            <!-- Ear fluff tuft -->
+            <rect x="9" y="6" width="2" height="1" fill="#f5e1c8"/>
+
+            <!-- Right Ear outline -->
+            <rect x="26" y="1" width="2" height="1" fill="#3b2314"/>
+            <rect x="28" y="2" width="1" height="5" fill="#3b2314"/>
+            <rect x="24" y="2" width="2" height="1" fill="#3b2314"/>
+            <rect x="23" y="3" width="1" height="2" fill="#3b2314"/>
+            <rect x="22" y="5" width="1" height="2" fill="#3b2314"/>
+            <!-- Right Ear fur & peach inner -->
+            <rect x="26" y="2" width="2" height="5" fill="#b88655"/>
+            <rect x="24" y="3" width="2" height="4" fill="#6e472b"/>
+            <rect x="23" y="5" width="1" height="2" fill="#b88655"/>
+            <rect x="25" y="3" width="2" height="4" fill="#e8b4a6"/>
+            <rect x="27" y="4" width="1" height="3" fill="#e8b4a6"/>
+            <!-- Ear fluff tuft -->
+            <rect x="25" y="6" width="2" height="1" fill="#f5e1c8"/>
+          </g>
+
+          <!-- Head outline -->
+          <rect x="14" y="6" width="8" height="1" fill="#3b2314"/>
+          <rect x="7" y="7" width="1" height="2" fill="#3b2314"/>
+          <rect x="28" y="7" width="1" height="2" fill="#3b2314"/>
+          <rect x="6" y="9" width="1" height="8" fill="#3b2314"/>
+          <rect x="29" y="9" width="1" height="8" fill="#3b2314"/>
+          <rect x="7" y="17" width="2" height="2" fill="#3b2314"/>
+          <rect x="27" y="17" width="2" height="2" fill="#3b2314"/>
+          <rect x="9" y="19" width="2" height="1" fill="#3b2314"/>
+          <rect x="25" y="19" width="2" height="1" fill="#3b2314"/>
+
+          <!-- Head base tabby fur -->
+          <rect x="8" y="7" width="20" height="3" fill="#b88655"/>
+          <rect x="7" y="9" width="22" height="8" fill="#cfa06e"/>
+          <rect x="9" y="17" width="18" height="3" fill="#b88655"/>
+
+          <!-- Warm darker shading on top & sides of head -->
+          <rect x="12" y="7" width="12" height="2" fill="#9e6d3e"/>
+          <rect x="7" y="10" width="2" height="5" fill="#9e6d3e"/>
+          <rect x="27" y="10" width="2" height="5" fill="#9e6d3e"/>
+
+          <!-- Classic Tabby "M" on Forehead -->
+          <rect x="14" y="7" width="1" height="4" fill="#2e1a0e"/>
+          <rect x="21" y="7" width="1" height="4" fill="#2e1a0e"/>
+          <rect x="17" y="7" width="2" height="3" fill="#2e1a0e"/>
+          <rect x="15" y="8" width="1" height="2" fill="#4d2e1b"/>
+          <rect x="20" y="8" width="1" height="2" fill="#4d2e1b"/>
+          <rect x="16" y="9" width="1" height="1" fill="#4d2e1b"/>
+          <rect x="19" y="9" width="1" height="1" fill="#4d2e1b"/>
+
+          <!-- Cream "Spectacle" highlights around inner eyes & bridge -->
+          <rect x="15" y="11" width="1" height="5" fill="#f5e2c8"/>
+          <rect x="20" y="11" width="1" height="5" fill="#f5e2c8"/>
+          <rect x="10" y="10" width="4" height="1" fill="#f5e2c8"/>
+          <rect x="22" y="10" width="4" height="1" fill="#f5e2c8"/>
+          <rect x="16" y="12" width="4" height="4" fill="#b88655"/>
+          <rect x="17" y="11" width="2" height="4" fill="#9e6d3e"/>
+
+          <!-- Tabby cheek eyeliner streaks -->
+          <rect x="8" y="14" width="2" height="1" fill="#2e1a0e"/>
+          <rect x="7" y="15" width="2" height="1" fill="#4d2e1b"/>
+          <rect x="8" y="16" width="3" height="1" fill="#2e1a0e"/>
+
+          <rect x="26" y="14" width="2" height="1" fill="#2e1a0e"/>
+          <rect x="27" y="15" width="2" height="1" fill="#4d2e1b"/>
+          <rect x="25" y="16" width="3" height="1" fill="#2e1a0e"/>
+
+          <!-- Light cream muzzle ("орешки") & white chin -->
+          <rect x="12" y="16" width="12" height="3" fill="#f0dec6"/>
+          <rect x="13" y="17" width="10" height="3" fill="#fff6eb"/>
+          <!-- Whisker dots -->
+          <rect x="13" y="17" width="1" height="1" fill="#6e472b"/>
+          <rect x="15" y="17" width="1" height="1" fill="#6e472b"/>
+          <rect x="20" y="17" width="1" height="1" fill="#6e472b"/>
+          <rect x="22" y="17" width="1" height="1" fill="#6e472b"/>
+
+          <!-- Terracotta-pink nose & mouth -->
+          <rect x="17" y="15" width="2" height="1" fill="#3a2012"/>
+          <rect x="17" y="16" width="2" height="1" fill="#b8634d"/>
+          <rect x="17" y="17" width="2" height="1" fill="#3a2012"/>
+          <rect x="16" y="18" width="1" height="1" fill="#3a2012"/>
+          <rect x="19" y="18" width="1" height="1" fill="#3a2012"/>
+
+          <!-- Whiskers -->
+          <rect x="3" y="15" width="3" height="1" fill="#fff6eb"/>
+          <rect x="2" y="17" width="4" height="1" fill="#f0dec6"/>
+          <rect x="30" y="15" width="3" height="1" fill="#fff6eb"/>
+          <rect x="30" y="17" width="4" height="1" fill="#f0dec6"/>
+
+          <!-- Body outline -->
+          <rect x="9" y="20" width="1" height="10" fill="#3b2314"/>
+          <rect x="26" y="20" width="1" height="10" fill="#3b2314"/>
+          <rect x="10" y="30" width="16" height="1" fill="#3b2314"/>
+
+          <!-- Tabby body & cream chest -->
+          <rect x="10" y="20" width="16" height="10" fill="#b88655"/>
+          <rect x="13" y="20" width="10" height="8" fill="#f5e1c8"/>
+          <!-- Tabby chest "necklace" stripes -->
+          <rect x="11" y="21" width="14" height="1" fill="#4d2e1b"/>
+          <rect x="14" y="22" width="8" height="1" fill="#6e472b"/>
+
+          <!-- Front Paws with Tabby Stripes -->
+          <rect x="11" y="24" width="4" height="6" fill="#cfa06e"/>
+          <rect x="21" y="24" width="4" height="6" fill="#cfa06e"/>
+          <!-- Dark paw bands -->
+          <rect x="11" y="25" width="4" height="1" fill="#2e1a0e"/>
+          <rect x="11" y="27" width="4" height="1" fill="#4d2e1b"/>
+          <rect x="21" y="25" width="4" height="1" fill="#2e1a0e"/>
+          <rect x="21" y="27" width="4" height="1" fill="#4d2e1b"/>
+          <!-- Paw tips & center gap -->
+          <rect x="11" y="29" width="4" height="1" fill="#f5e1c8"/>
+          <rect x="21" y="29" width="4" height="1" fill="#f5e1c8"/>
+          <rect x="15" y="25" width="1" height="5" fill="#3b2314"/>
+          <rect x="20" y="25" width="1" height="5" fill="#3b2314"/>
+          <rect x="16" y="24" width="4" height="6" fill="#9e6d3e"/>
+
+          <!-- Huge Kitten Eyes (amber iris + big tracking pupils) -->
+          <g id="misa-eyes-normal">
+            <!-- Eyeliner tops -->
+            <rect x="10" y="10" width="5" height="1" fill="#2e1a0e"/>
+            <rect x="21" y="10" width="5" height="1" fill="#2e1a0e"/>
+            <!-- Amber-gold irises (5x5) -->
+            <rect x="10" y="11" width="5" height="5" fill="#c9933b"/>
+            <rect x="21" y="11" width="5" height="5" fill="#c9933b"/>
+            <!-- Big round black pupils (3x3) -->
+            <rect id="pupil-left" x="11" y="12" width="3" height="3" fill="#140c08"/>
+            <rect id="pupil-right" x="22" y="12" width="3" height="3" fill="#140c08"/>
+            <!-- Bright eye sparkles -->
+            <rect id="sparkle-left" x="11" y="12" width="1" height="1" fill="#ffffff"/>
+            <rect id="sparkle-right" x="22" y="12" width="1" height="1" fill="#ffffff"/>
+          </g>
+
+          <!-- Happy Eyes (^ ^) shown on victory / pet -->
+          <g id="misa-eyes-happy" class="hidden">
+            <rect x="10" y="13" width="1" height="1" fill="#2e1a0e"/>
+            <rect x="11" y="12" width="3" height="1" fill="#2e1a0e"/>
+            <rect x="14" y="13" width="1" height="1" fill="#2e1a0e"/>
+
+            <rect x="21" y="13" width="1" height="1" fill="#2e1a0e"/>
+            <rect x="22" y="12" width="3" height="1" fill="#2e1a0e"/>
+            <rect x="25" y="13" width="1" height="1" fill="#2e1a0e"/>
+          </g>
+        </svg>
+      </div>
+    </section>
+
+    <!-- Question Dialog Box -->
+    <section class="pixel-box dialog-card" id="question-card">
+      <h1 class="dialog-title">💌 ВОПРОС ДЛЯ СТИНЫ:</h1>
+      <p class="dialog-text">
+        Пойдёшь гулять со мной? 🐾
+      </p>
+      <div class="buttons-row" id="buttons-row">
+        <button class="pixel-btn btn-love" id="love-btn" type="button">
+          💖 Да!
+        </button>
+
+        <div class="btn-runaway-wrap" id="runaway-wrap" tabindex="-1">
+          <button class="pixel-btn btn-runaway" id="runaway-btn" type="button" tabindex="-1">
+            <span class="btn-face" id="runaway-face">😾</span>
+            <span id="runaway-label">Нет</span>
+          </button>
+          <div class="pixel-legs" aria-hidden="true">
+            <div class="leg leg-left"></div>
+            <div class="leg leg-right"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Victory Postcard -->
+    <section class="pixel-box victory-card" id="victory-card">
+      <h2 class="victory-title">УРААА! ИДЁМ ГУЛЯТЬ! 💖</h2>
+
+      <div class="real-misa-frame" id="real-misa-frame" title="Нажми, чтобы помяукать с Мисой">
+        <img class="real-misa-img" src="data:image/jpeg;base64,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" alt="Миса" />
+        <div class="real-misa-caption">Миса одобряет! 🐾</div>
+      </div>
+
+      <p class="victory-quote">
+        Договорились, теперь не слиться! Пиши мне, когда идём 🐾
+      </p>
+      <p class="victory-stats" id="victory-stats">
+        Попыток поймать кнопку «Нет»: 0
+      </p>
+      <div class="victory-actions">
+        <button class="pixel-btn btn-pet" id="pet-btn" type="button">
+          🐾 Погладить Мису (+1 Дримис)
+        </button>
+        <button class="pixel-btn btn-replay" id="replay-btn" type="button">
+          🔄 Ещё раз
+        </button>
+      </div>
+      <div class="dreamies-counter" id="dreamies-counter"></div>
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // ==========================================
+      // 1. DATA & REACTIONS
+      // ==========================================
+      const RUNAWAY_FACES = ['😾', '😼', '🏃‍♀️', '💨', '🙈'];
+
+      const MISA_LINES = [
+        'Не-а, кнопка «Нет» сегодня не работает 🐾',
+        'Кнопка «Нет» убежала! Жми «Да» 💖',
+        'Миса заблокировала этот вариант 🐱',
+        'Слишком медленно! 🏃‍♀️💨',
+        'Отказаться не получится 😼',
+        'Тут только один правильный ответ ✨'
+      ];
+
+      // ==========================================
+      // 2. DOM ELEMENTS
+      // ==========================================
+      const safeAreaProbe = document.getElementById('safe-area-probe');
+      const attemptCountEl = document.getElementById('attempt-count');
+      const soundToggleBtn = document.getElementById('sound-toggle');
+      const misaBubbleEl = document.getElementById('misa-bubble');
+      const misaSpriteEl = document.getElementById('misa-sprite');
+      const misaEyesNormal = document.getElementById('misa-eyes-normal');
+      const misaEyesHappy = document.getElementById('misa-eyes-happy');
+      const pupilLeft = document.getElementById('pupil-left');
+      const pupilRight = document.getElementById('pupil-right');
+      const sparkleLeft = document.getElementById('sparkle-left');
+      const sparkleRight = document.getElementById('sparkle-right');
+
+      const questionCard = document.getElementById('question-card');
+      const buttonsRow = document.getElementById('buttons-row');
+      const loveBtn = document.getElementById('love-btn');
+      const runawayWrap = document.getElementById('runaway-wrap');
+      const runawayBtn = document.getElementById('runaway-btn');
+      const runawayFace = document.getElementById('runaway-face');
+      const runawayLabel = document.getElementById('runaway-label');
+
+      const victoryCard = document.getElementById('victory-card');
+      const realMisaFrame = document.getElementById('real-misa-frame');
+      const victoryStats = document.getElementById('victory-stats');
+      const petBtn = document.getElementById('pet-btn');
+      const replayBtn = document.getElementById('replay-btn');
+      const dreamiesCounterEl = document.getElementById('dreamies-counter');
+
+      const bgCanvas = document.getElementById('bg-canvas');
+      const bgCtx = bgCanvas.getContext('2d');
+      const fxCanvas = document.getElementById('fx-canvas');
+      const fxCtx = fxCanvas.getContext('2d');
+
+      // ==========================================
+      // 3. STATE & ANDROID HAPTICS
+      // ==========================================
+      let attempts = 0;
+      let phraseIndex = 0;
+      let lastMisaLineIdx = -1;
+      let hasEscaped = false;
+      let isVictory = false;
+      let lastDodgeTime = 0;
+      let runAnimTimer = null;
+      let happyEyeTimer = null;
+      let dreamies = 0;
+      let soundEnabled = true;
+
+      function vibrate(pattern) {
+        try {
+          if (navigator.vibrate) {
+            navigator.vibrate(pattern);
+          }
+        } catch (_) {}
+      }
+
+      // ==========================================
+      // 4. 8-BIT WEB AUDIO SYNTHESIZER
+      // ==========================================
+      let audioCtx = null;
+
+      function ensureAudio() {
+        if (!soundEnabled) return null;
+        if (!audioCtx) {
+          const Ctx = window.AudioContext || window.webkitAudioContext;
+          if (Ctx) audioCtx = new Ctx();
+        }
+        if (audioCtx && audioCtx.state === 'suspended') {
+          audioCtx.resume().catch(() => {});
+        }
+        return audioCtx;
+      }
+
+      function playTone(freqStart, freqEnd, duration, type = 'square', gainVal = 0.08, delay = 0) {
+        const ctx = ensureAudio();
+        if (!ctx) return;
+        const now = ctx.currentTime + delay;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freqStart, now);
+        if (freqEnd !== freqStart) {
+          osc.frequency.exponentialRampToValueAtTime(Math.max(20, freqEnd), now + duration);
+        }
+        gain.gain.setValueAtTime(gainVal, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + duration);
+      }
+
+      function playUiBlip() {
+        playTone(800, 1050, 0.035, 'triangle', 0.04);
+      }
+
+      function playToggleSound(turningOn) {
+        if (turningOn) {
+          playTone(520, 780, 0.045, 'square', 0.045, 0);
+          playTone(780, 1040, 0.055, 'triangle', 0.05, 0.04);
+        } else {
+          playTone(680, 340, 0.06, 'square', 0.045, 0);
+        }
+      }
+
+      function playDodgeSound() {
+        // 3 quick pixel footstep blips + springy jump
+        playTone(220, 260, 0.028, 'triangle', 0.045, 0.00);
+        playTone(260, 300, 0.028, 'triangle', 0.045, 0.032);
+        playTone(300, 340, 0.028, 'triangle', 0.045, 0.064);
+        playTone(320, 720, 0.11, 'square', 0.055, 0.085);
+      }
+
+      function playTeleportSound() {
+        playTone(720, 260, 0.09, 'square', 0.06, 0);
+        playTone(440, 880, 0.09, 'triangle', 0.07, 0.06);
+      }
+
+      function playMeowSound() {
+        playTone(540, 820, 0.09, 'triangle', 0.09, 0);
+        playTone(820, 460, 0.16, 'triangle', 0.09, 0.08);
+      }
+
+      function playPetButtonSound() {
+        // Double high chiptune coin/bonus chime
+        playTone(987.77, 987.77, 0.06, 'square', 0.055, 0);
+        playTone(1318.51, 1318.51, 0.13, 'square', 0.06, 0.06);
+      }
+
+      function playPurrSound() {
+        playTone(130, 150, 0.18, 'sawtooth', 0.03, 0.08);
+        playTone(150, 130, 0.18, 'sawtooth', 0.03, 0.23);
+        playTone(660, 880, 0.1, 'triangle', 0.05, 0.14);
+      }
+
+      function playYesButtonSound() {
+        // Crisp 8-bit confirmation chord
+        playTone(523.25, 523.25, 0.09, 'square', 0.05, 0);
+        playTone(659.25, 659.25, 0.09, 'triangle', 0.05, 0);
+        playTone(783.99, 783.99, 0.11, 'square', 0.05, 0.02);
+      }
+
+      function playVictorySound() {
+        const notes = [
+          { f: 523.25, t: 0.10, d: 0.11 }, // C5
+          { f: 659.25, t: 0.21, d: 0.11 }, // E5
+          { f: 783.99, t: 0.32, d: 0.11 }, // G5
+          { f: 1046.5, t: 0.44, d: 0.25 }, // C6
+          { f: 783.99, t: 0.64, d: 0.10 }, // G5
+          { f: 1046.5, t: 0.75, d: 0.36 }  // C6
+        ];
+        notes.forEach((n) => {
+          playTone(n.f, n.f, n.d, 'square', 0.06, n.t);
+          playTone(n.f / 2, n.f / 2, n.d, 'triangle', 0.055, n.t);
+        });
+      }
+
+      function playReplayButtonSound() {
+        playTone(440.00, 440.00, 0.065, 'square', 0.05, 0.00);
+        playTone(554.37, 554.37, 0.065, 'square', 0.05, 0.065);
+        playTone(659.25, 659.25, 0.110, 'triangle', 0.06, 0.13);
+      }
+
+      soundToggleBtn.addEventListener('click', () => {
+        if (soundEnabled) {
+          ensureAudio();
+          playToggleSound(false);
+          soundEnabled = false;
+        } else {
+          soundEnabled = true;
+          ensureAudio();
+          playToggleSound(true);
+        }
+        soundToggleBtn.textContent = soundEnabled ? '🔊' : '🔇';
+      });
+
+      [loveBtn, petBtn, replayBtn, soundToggleBtn].forEach((btn) => {
+        btn.addEventListener('mouseenter', () => {
+          if (soundEnabled && audioCtx && audioCtx.state === 'running') {
+            playUiBlip();
+          }
+        });
+      });
+
+      // ==========================================
+      // 5. PIXEL CANVAS PARTICLES (BG & FX)
+      // ==========================================
+      let width = window.innerWidth;
+      let height = window.innerHeight;
+
+      function resizeCanvases() {
+        width = window.innerWidth;
+        height = window.innerHeight;
+        bgCanvas.width = width;
+        bgCanvas.height = height;
+        fxCanvas.width = width;
+        fxCanvas.height = height;
+        if (hasEscaped && !isVictory) {
+          keepButtonInViewport();
+        }
+      }
+      window.addEventListener('resize', resizeCanvases);
+      resizeCanvases();
+
+      // Pixel sprite matrices
+      const HEART_PIXELS = [
+        [0,1,1,0,0,1,1,0],
+        [1,1,1,1,1,1,1,1],
+        [1,1,1,1,1,1,1,1],
+        [1,1,1,1,1,1,1,1],
+        [0,1,1,1,1,1,1,0],
+        [0,0,1,1,1,1,0,0],
+        [0,0,0,1,1,0,0,0]
+      ];
+
+      // Tabby kitten matrix matching Misa's colors
+      const CAT_PIXELS = [
+        [2,0,0,0,0,0,2],
+        [2,1,0,0,0,1,2],
+        [1,1,2,1,2,1,1],
+        [1,4,1,1,1,4,1],
+        [1,1,3,2,3,1,1],
+        [0,3,3,3,3,3,0]
+      ];
+
+      const COFFEE_PIXELS = [
+        [0,1,0,1,0,0],
+        [0,0,0,0,0,0],
+        [2,2,2,2,2,0],
+        [2,3,3,2,2,2],
+        [2,3,3,2,0,2],
+        [2,2,2,2,2,0],
+        [0,2,2,2,0,0]
+      ];
+
+      function drawPixelMatrix(ctx, matrix, x, y, pixelSize, colors) {
+        for (let r = 0; r < matrix.length; r++) {
+          for (let c = 0; c < matrix[r].length; c++) {
+            const val = matrix[r][c];
+            if (!val) continue;
+            ctx.fillStyle = colors[val] || colors[1];
+            ctx.fillRect(
+              Math.round(x + c * pixelSize),
+              Math.round(y + r * pixelSize),
+              pixelSize,
+              pixelSize
+            );
+          }
+        }
+      }
+
+      // Falling background items
+      const bgItems = Array.from({ length: 28 }, () => ({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        speed: 0.35 + Math.random() * 0.65,
+        size: Math.random() > 0.45 ? 2 : 3,
+        type: Math.random() > 0.35 ? 'heart' : 'star',
+        color: ['#ff99cc', '#ffb3d9', '#d8c2ff', '#ff80bf'][Math.floor(Math.random() * 4)],
+        alpha: 0.25 + Math.random() * 0.35,
+        phase: Math.random() * Math.PI * 2
+      }));
+
+      // Active FX bursts
+      const fxParticles = [];
+
+      function spawnDustPuff(x, y) {
+        const colors = ['#ffffff', '#e9dcff', '#ffd6ea', '#d8c2ff'];
+        for (let i = 0; i < 12; i++) {
+          const angle = (Math.PI * 2 * i) / 12 + Math.random() * 0.3;
+          const spd = 1.2 + Math.random() * 2.5;
+          fxParticles.push({
+            kind: 'square',
+            x,
+            y,
+            vx: Math.cos(angle) * spd,
+            vy: Math.sin(angle) * spd - 0.6,
+            size: 5 + Math.floor(Math.random() * 4),
+            color: colors[i % colors.length],
+            life: 1,
+            decay: 0.04 + Math.random() * 0.02,
+            gravity: 0.03
+          });
+        }
+      }
+
+      function spawnPoofLabel(x, y) {
+        const tag = document.createElement('div');
+        tag.className = 'poof-tag';
+        tag.textContent = '*ПУФ!*';
+        tag.style.left = x + 'px';
+        tag.style.top = y + 'px';
+        document.body.appendChild(tag);
+        setTimeout(() => tag.remove(), 660);
+      }
+
+      function spawnMiniHearts(x, y, count = 6) {
+        for (let i = 0; i < count; i++) {
+          fxParticles.push({
+            kind: 'heart',
+            x: x + (Math.random() - 0.5) * 60,
+            y: y + (Math.random() - 0.5) * 20,
+            vx: (Math.random() - 0.5) * 2,
+            vy: -1.5 - Math.random() * 1.8,
+            size: 2,
+            color: i % 2 === 0 ? '#ff66b2' : '#ff3385',
+            life: 1,
+            decay: 0.022 + Math.random() * 0.012,
+            gravity: -0.01
+          });
+        }
+      }
+
+      function spawnVictoryFireworks() {
+        const kinds = ['heart', 'heart', 'cat', 'coffee'];
+        const origins = [
+          { x: width * 0.25, y: height * 0.45 },
+          { x: width * 0.75, y: height * 0.45 },
+          { x: width * 0.5, y: height * 0.3 }
+        ];
+        origins.forEach((o) => {
+          for (let i = 0; i < 24; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const speed = 2 + Math.random() * 5.2;
+            const kind = kinds[Math.floor(Math.random() * kinds.length)];
+            fxParticles.push({
+              kind,
+              x: o.x,
+              y: o.y,
+              vx: Math.cos(angle) * speed,
+              vy: Math.sin(angle) * speed - 2.2,
+              size: 3,
+              color: ['#ff66b2', '#ff3385', '#ffb3d9', '#b58eff'][Math.floor(Math.random() * 4)],
+              life: 1,
+              decay: 0.011 + Math.random() * 0.008,
+              gravity: 0.09
+            });
+          }
+        });
+      }
+
+      function renderLoops() {
+        // Background canvas
+        bgCtx.clearRect(0, 0, width, height);
+        for (const item of bgItems) {
+          item.y += item.speed;
+          item.phase += 0.025;
+          const sway = Math.sin(item.phase) * 0.4;
+          item.x += sway;
+          if (item.y > height + 24) {
+            item.y = -24;
+            item.x = Math.random() * width;
+          }
+          bgCtx.globalAlpha = item.alpha;
+          if (item.type === 'heart') {
+            drawPixelMatrix(bgCtx, HEART_PIXELS, item.x, item.y, item.size, { 1: item.color });
+          } else {
+            bgCtx.fillStyle = '#ffffff';
+            const s = item.size * 2;
+            bgCtx.fillRect(Math.round(item.x), Math.round(item.y), s, s);
+            bgCtx.fillStyle = item.color;
+            bgCtx.fillRect(Math.round(item.x + s), Math.round(item.y), s / 2, s / 2);
+          }
+        }
+        bgCtx.globalAlpha = 1;
+
+        // FX canvas
+        fxCtx.clearRect(0, 0, width, height);
+        for (let i = fxParticles.length - 1; i >= 0; i--) {
+          const p = fxParticles[i];
+          p.x += p.vx;
+          p.y += p.vy;
+          p.vy += p.gravity;
+          p.life -= p.decay;
+
+          if (p.life <= 0) {
+            fxParticles.splice(i, 1);
+            continue;
+          }
+
+          fxCtx.globalAlpha = Math.max(0, p.life);
+          if (p.kind === 'square') {
+            fxCtx.fillStyle = p.color;
+            fxCtx.fillRect(Math.round(p.x), Math.round(p.y), p.size, p.size);
+          } else if (p.kind === 'heart') {
+            drawPixelMatrix(fxCtx, HEART_PIXELS, p.x, p.y, p.size, { 1: p.color });
+          } else if (p.kind === 'cat') {
+            drawPixelMatrix(fxCtx, CAT_PIXELS, p.x, p.y, p.size, {
+              1: '#b88655',
+              2: '#3b2314',
+              3: '#f5e1c8',
+              4: '#c9933b'
+            });
+          } else if (p.kind === 'coffee') {
+            drawPixelMatrix(fxCtx, COFFEE_PIXELS, p.x, p.y, p.size, { 1: '#ffffff', 2: '#c48f65', 3: '#6f4e37' });
+          }
+        }
+        fxCtx.globalAlpha = 1;
+
+        requestAnimationFrame(renderLoops);
+      }
+      requestAnimationFrame(renderLoops);
+
+      // ==========================================
+      // 6. MISA EYE TRACKING & REACTIONS
+      // ==========================================
+      function updateMisaEyes(targetX, targetY) {
+        if (isVictory) return;
+        const rect = misaSpriteEl.getBoundingClientRect();
+        const catCx = rect.left + rect.width / 2;
+        const catCy = rect.top + rect.height * 0.42;
+        const dx = targetX - catCx;
+        const dy = targetY - catCy;
+
+        let ox = 0;
+        let oy = 0;
+        if (dx < -45) ox = -1;
+        else if (dx > 45) ox = 1;
+        if (dy < -30) oy = -1;
+        else if (dy > 35) oy = 1;
+
+        pupilLeft.setAttribute('x', 11 + ox);
+        pupilLeft.setAttribute('y', 12 + oy);
+        pupilRight.setAttribute('x', 22 + ox);
+        pupilRight.setAttribute('y', 12 + oy);
+        sparkleLeft.setAttribute('x', 11 + ox);
+        sparkleLeft.setAttribute('y', 12 + oy);
+        sparkleRight.setAttribute('x', 22 + ox);
+        sparkleRight.setAttribute('y', 12 + oy);
+      }
+
+      function showHappyEyes(durationMs = 900) {
+        misaEyesNormal.classList.add('hidden');
+        misaEyesHappy.classList.remove('hidden');
+        if (happyEyeTimer) clearTimeout(happyEyeTimer);
+        if (durationMs > 0) {
+          happyEyeTimer = setTimeout(() => {
+            if (!isVictory) {
+              misaEyesHappy.classList.add('hidden');
+              misaEyesNormal.classList.remove('hidden');
+            }
+          }, durationMs);
+        }
+      }
+
+      function setMisaBubble(text) {
+        misaBubbleEl.textContent = text;
+        misaBubbleEl.classList.remove('pop');
+        void misaBubbleEl.offsetWidth;
+        misaBubbleEl.classList.add('pop');
+      }
+
+      misaSpriteEl.addEventListener('click', () => {
+        ensureAudio();
+        playMeowSound();
+        vibrate(15);
+        showHappyEyes(850);
+        const r = misaSpriteEl.getBoundingClientRect();
+        spawnMiniHearts(r.left + r.width / 2, r.top + 20, 7);
+        if (!isVictory) {
+          setMisaBubble('Мрр-мяу! Жми скорее «Да» 💖');
+        } else {
+          setMisaBubble('Муррр~ Миса рада, что вы идёте гулять! 🐾💖');
+        }
+      });
+
+      realMisaFrame.addEventListener('click', () => {
+        ensureAudio();
+        playMeowSound();
+        vibrate(15);
+        showHappyEyes(0);
+        realMisaFrame.classList.remove('hop');
+        void realMisaFrame.offsetWidth;
+        realMisaFrame.classList.add('hop');
+        const r = realMisaFrame.getBoundingClientRect();
+        spawnMiniHearts(r.left + r.width / 2, r.top + 24, 10);
+        setMisaBubble('Муррр~ Миса рада, что вы идёте гулять! 🐾💖');
+      });
+
+      // ==========================================
+      // 7. RUNAWAY BUTTON PHYSICS (ANDROID & PC)
+      // ==========================================
+      function getSafeInsets() {
+        const cs = getComputedStyle(safeAreaProbe);
+        return {
+          top: parseFloat(cs.paddingTop) || 0,
+          bottom: parseFloat(cs.paddingBottom) || 0,
+          left: parseFloat(cs.paddingLeft) || 0,
+          right: parseFloat(cs.paddingRight) || 0
+        };
+      }
+
+      function getSafeBounds(btnW, btnH) {
+        const hudEl = document.querySelector('.rpg-hud');
+        const hudBottom = hudEl ? hudEl.getBoundingClientRect().bottom : 58;
+        const insets = getSafeInsets();
+        const pad = 14;
+        const minX = pad + insets.left;
+        const maxX = Math.max(minX, width - btnW - pad - insets.right);
+        const minY = Math.max(hudBottom + 10, 62 + insets.top);
+        const maxY = Math.max(minY, height - btnH - 20 - insets.bottom);
+        return { minX, maxX, minY, maxY };
+      }
+
+      function keepButtonInViewport() {
+        const rect = runawayWrap.getBoundingClientRect();
+        const bounds = getSafeBounds(rect.width, rect.height);
+        const clampedX = Math.min(bounds.maxX, Math.max(bounds.minX, rect.left));
+        const clampedY = Math.min(bounds.maxY, Math.max(bounds.minY, rect.top));
+        runawayWrap.style.left = clampedX + 'px';
+        runawayWrap.style.top = clampedY + 'px';
+      }
+
+      function distanceToRect(px, py, rect) {
+        const cx = Math.max(rect.left, Math.min(px, rect.right));
+        const cy = Math.max(rect.top, Math.min(py, rect.bottom));
+        return Math.hypot(px - cx, py - cy);
+      }
+
+      function overlapsLoveBtn(nx, ny, w, h) {
+        const lr = loveBtn.getBoundingClientRect();
+        const pad = 16;
+        return !(
+          nx + w < lr.left - pad ||
+          nx > lr.right + pad ||
+          ny + h < lr.top - pad ||
+          ny > lr.bottom + pad
+        );
+      }
+
+      function pickNextTextAndReaction() {
+        attempts += 1;
+        attemptCountEl.textContent = attempts;
+
+        phraseIndex = (phraseIndex + 1) % RUNAWAY_FACES.length;
+        runawayFace.textContent = RUNAWAY_FACES[phraseIndex];
+        runawayLabel.textContent = 'Нет';
+
+        let lineIdx;
+        do {
+          lineIdx = Math.floor(Math.random() * MISA_LINES.length);
+        } while (lineIdx === lastMisaLineIdx && MISA_LINES.length > 1);
+        lastMisaLineIdx = lineIdx;
+        setMisaBubble(MISA_LINES[lineIdx]);
+
+        // Grow and brighten the love button slightly with each attempt
+        const newScale = Math.min(1.36, 1 + attempts * 0.032);
+        loveBtn.style.setProperty('--love-scale', newScale.toFixed(3));
+        const lr = loveBtn.getBoundingClientRect();
+        spawnMiniHearts(lr.left + lr.width / 2, lr.top + lr.height / 2, 5);
+      }
+
+      function escapeButton(pointerX, pointerY, forceImmediateTeleport = false, isTouchMode = false) {
+        if (isVictory) return;
+
+        ensureAudio();
+        lastDodgeTime = Date.now();
+        vibrate(15);
+
+        const rect = runawayWrap.getBoundingClientRect();
+        const oldX = rect.left;
+        const oldY = rect.top;
+        const btnW = rect.width;
+        const btnH = rect.height;
+        const btnCx = oldX + btnW / 2;
+        const btnCy = oldY + btnH / 2;
+
+        // First escape: detach visually to fixed position cleanly
+        if (!hasEscaped) {
+          hasEscaped = true;
+          runawayWrap.style.left = oldX + 'px';
+          runawayWrap.style.top = oldY + 'px';
+          runawayWrap.classList.add('escaped');
+          document.body.appendChild(runawayWrap);
+        }
+
+        // Update phrase, counter, Misa speech & pink button size
+        pickNextTextAndReaction();
+
+        // Re-measure after label change
+        const updatedRect = runawayWrap.getBoundingClientRect();
+        const w = updatedRect.width;
+        const h = updatedRect.height;
+        const bounds = getSafeBounds(w, h);
+
+        // Compute repulsion vector from pointer/finger
+        let dx = btnCx - pointerX;
+        let dy = btnCy - pointerY;
+        const dist = Math.hypot(dx, dy);
+        if (dist < 1) {
+          const randAng = Math.random() * Math.PI * 2;
+          dx = Math.cos(randAng);
+          dy = Math.sin(randAng);
+        } else {
+          dx /= dist;
+          dy /= dist;
+        }
+
+        // Add subtle angle jitter so it doesn't bounce linearly into traps
+        const jitter = (Math.random() - 0.5) * 0.85;
+        const cos = Math.cos(jitter);
+        const sin = Math.sin(jitter);
+        const rdx = dx * cos - dy * sin;
+        const rdy = dx * sin + dy * cos;
+
+        // On Android finger chase: flee 135-200px; on desktop: 150-240px
+        const step = isTouchMode ? (135 + Math.random() * 65) : (150 + Math.random() * 90);
+        const candX = oldX + rdx * step;
+        const candY = oldY + rdy * step;
+
+        const clampedX = Math.min(bounds.maxX, Math.max(bounds.minX, candX));
+        const clampedY = Math.min(bounds.maxY, Math.max(bounds.minY, candY));
+
+        const distFromPointer = distanceToRect(pointerX, pointerY, {
+          left: clampedX,
+          right: clampedX + w,
+          top: clampedY,
+          bottom: clampedY + h
+        });
+        const movedDist = Math.hypot(clampedX - oldX, clampedY - oldY);
+
+        // Teleport *ПУФ!* only when cornered against edge/cursor or forced
+        const needsTeleport =
+          forceImmediateTeleport ||
+          distFromPointer < 92 ||
+          movedDist < 62 ||
+          overlapsLoveBtn(clampedX, clampedY, w, h);
+
+        let targetX = clampedX;
+        let targetY = clampedY;
+        let didTeleport = false;
+
+        if (needsTeleport) {
+          didTeleport = true;
+          let bestScore = -1;
+          for (let i = 0; i < 20; i++) {
+            const rx = bounds.minX + Math.random() * (bounds.maxX - bounds.minX);
+            const ry = bounds.minY + Math.random() * (bounds.maxY - bounds.minY);
+            const dPtr = Math.hypot(rx + w / 2 - pointerX, ry + h / 2 - pointerY);
+            const dOld = Math.hypot(rx - oldX, ry - oldY);
+            const overlapPenalty = overlapsLoveBtn(rx, ry, w, h) ? -500 : 0;
+            const score = dPtr + dOld * 0.4 + overlapPenalty;
+            if (score > bestScore) {
+              bestScore = score;
+              targetX = rx;
+              targetY = ry;
+            }
+          }
+        }
+
+        // Dust puff at departure
+        spawnDustPuff(btnCx, btnCy);
+
+        if (didTeleport) {
+          runawayWrap.classList.remove('smooth-move');
+          runawayWrap.classList.remove('poof-in');
+          void runawayWrap.offsetWidth;
+          runawayWrap.style.left = targetX + 'px';
+          runawayWrap.style.top = targetY + 'px';
+          runawayWrap.classList.add('poof-in');
+          spawnPoofLabel(btnCx, btnCy);
+          playTeleportSound();
+        } else {
+          runawayWrap.classList.remove('poof-in');
+          runawayWrap.classList.add('smooth-move');
+          runawayWrap.style.left = targetX + 'px';
+          runawayWrap.style.top = targetY + 'px';
+          playDodgeSound();
+        }
+
+        // Animate scampering pixel legs
+        runawayWrap.classList.add('running');
+        if (runAnimTimer) clearTimeout(runAnimTimer);
+        runAnimTimer = setTimeout(() => {
+          runawayWrap.classList.remove('running');
+        }, 320);
+
+        // Misa tracks the runaway button's new center
+        updateMisaEyes(targetX + w / 2, targetY + h / 2);
+      }
+
+      // Desktop mouse tracking
+      document.addEventListener('mousemove', (e) => {
+        if (isVictory) return;
+        const rect = runawayWrap.getBoundingClientRect();
+        if (e.target && e.target.closest && e.target.closest('#love-btn, #sound-toggle, #misa-sprite')) {
+          updateMisaEyes(rect.left + rect.width / 2, rect.top + rect.height / 2);
+          return;
+        }
+        const dist = distanceToRect(e.clientX, e.clientY, rect);
+        if (dist < 115 && Date.now() - lastDodgeTime > 150) {
+          escapeButton(e.clientX, e.clientY, false, false);
+        } else {
+          updateMisaEyes(rect.left + rect.width / 2, rect.top + rect.height / 2);
+        }
+      });
+
+      // Immediate dodge if desktop mouse cursor touches button directly
+      runawayWrap.addEventListener('mouseenter', (e) => {
+        if (isVictory) return;
+        escapeButton(e.clientX, e.clientY, true, false);
+      });
+
+      // Android & Touch interception: flee on legs when finger comes within 85px or touches directly!
+      function handleTouchChase(clientX, clientY, e, isDirect) {
+        if (isVictory) return;
+        if (!isDirect && e && e.target && e.target.closest && e.target.closest('#love-btn, #sound-toggle, #misa-sprite, #pet-btn, #replay-btn')) {
+          return;
+        }
+        const rect = runawayWrap.getBoundingClientRect();
+        const dist = distanceToRect(clientX, clientY, rect);
+        if (isDirect || dist < 85) {
+          if (e && e.cancelable) e.preventDefault();
+          if (e) e.stopPropagation();
+          if (Date.now() - lastDodgeTime > 125) {
+            escapeButton(clientX, clientY, false, true);
+          }
+        }
+      }
+
+      runawayWrap.addEventListener('touchstart', (e) => {
+        const t = e.touches[0] || e.changedTouches[0];
+        if (t) handleTouchChase(t.clientX, t.clientY, e, true);
+      }, { passive: false });
+
+      document.addEventListener('touchstart', (e) => {
+        if (isVictory) return;
+        const t = e.touches[0];
+        if (t) handleTouchChase(t.clientX, t.clientY, e, false);
+      }, { passive: false });
+
+      document.addEventListener('touchmove', (e) => {
+        if (isVictory) return;
+        const t = e.touches[0];
+        if (t) handleTouchChase(t.clientX, t.clientY, e, false);
+      }, { passive: false });
+
+      runawayWrap.addEventListener('pointerdown', (e) => {
+        if (isVictory) return;
+        if (e.pointerType === 'touch' || e.pointerType === 'pen') {
+          handleTouchChase(e.clientX, e.clientY, e, true);
+        } else {
+          if (e.cancelable) e.preventDefault();
+          escapeButton(e.clientX, e.clientY, true, false);
+        }
+      });
+
+      // Ultimate failsafe against click / keyboard focus
+      runawayBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        escapeButton(e.clientX || width / 2, e.clientY || height / 2, true, true);
+        return false;
+      });
+
+      runawayBtn.addEventListener('focus', () => {
+        runawayBtn.blur();
+        const r = runawayWrap.getBoundingClientRect();
+        escapeButton(r.left + r.width / 2, r.top + r.height / 2, true, false);
+      });
+
+      // ==========================================
+      // 8. VICTORY & REPLAY LOGIC
+      // ==========================================
+      loveBtn.addEventListener('click', () => {
+        if (isVictory) return;
+        isVictory = true;
+        ensureAudio();
+        playYesButtonSound();
+        playVictorySound();
+        vibrate([25, 40, 25]);
+
+        // Hide question & runaway button
+        questionCard.classList.add('hidden');
+        runawayWrap.classList.add('hidden');
+
+        // Happy Misa!
+        showHappyEyes(0);
+        setMisaBubble('Муррр~ Миса рада, что вы идёте гулять! 🐾💖');
+
+        // Update stats
+        victoryStats.textContent =
+          `Попыток поймать кнопку «Нет»: ${attempts}`;
+
+        victoryCard.classList.add('active');
+        spawnVictoryFireworks();
+        setTimeout(spawnVictoryFireworks, 450);
+      });
+
+      petBtn.addEventListener('click', () => {
+        dreamies += 1;
+        ensureAudio();
+        playPetButtonSound();
+        playPurrSound();
+        vibrate([25, 40, 25]);
+        showHappyEyes(0);
+
+        realMisaFrame.classList.remove('hop');
+        void realMisaFrame.offsetWidth;
+        realMisaFrame.classList.add('hop');
+
+        const r = realMisaFrame.getBoundingClientRect();
+        spawnMiniHearts(r.left + r.width / 2, r.top + 24, 12);
+        setMisaBubble('Муррр~ Спасибо за вкусный Дримис! 🐱✨');
+        dreamiesCounterEl.textContent = `Скормлено Дримисов: ${dreamies} 🐟💖`;
+      });
+
+      replayBtn.addEventListener('click', () => {
+        isVictory = false;
+        attempts = 0;
+        phraseIndex = 0;
+        dreamies = 0;
+        hasEscaped = false;
+        lastDodgeTime = 0;
+
+        attemptCountEl.textContent = '0';
+        dreamiesCounterEl.textContent = '';
+
+        // Reset love button scale
+        loveBtn.style.setProperty('--love-scale', '1');
+
+        // Reset runaway button back inside buttons row
+        runawayWrap.classList.remove('escaped', 'smooth-move', 'poof-in', 'running', 'hidden');
+        runawayWrap.style.left = '';
+        runawayWrap.style.top = '';
+        runawayFace.textContent = RUNAWAY_FACES[0];
+        runawayLabel.textContent = 'Нет';
+        buttonsRow.appendChild(runawayWrap);
+
+        // Reset Misa eyes & bubble
+        misaEyesHappy.classList.add('hidden');
+        misaEyesNormal.classList.remove('hidden');
+        setMisaBubble('Мяу! Второй раунд! Ну что, идём гулять? 🐾');
+
+        // Swap cards
+        victoryCard.classList.remove('active');
+        questionCard.classList.remove('hidden');
+
+        ensureAudio();
+        playReplayButtonSound();
+      });
+    })();
+  </script>
+</body>
+</html>
